@@ -59,33 +59,30 @@ func (l *KLDivLoss) Evaluate(H op.Parameter, gradient op.Parameter) float32 {
 	grad_data := gradient.Data()
 	w_data := l.W.data.Val
 
+	// 1st pass for loss/grad coresponding to W*H only.
 	for i := uint32(0); i < M; i++ {
 		for j := uint32(0); j < N; j++ {
 			wh := float32(0.0)
-			for k := uint32(0); k < K; k += 1 {
+			for k := uint32(0); k < K; k++ {
 				wh += w_data[i*K+k] * H_data[j*K+k]
-			}
-
-			// v is zero
-			value += wh
-			for k := uint32(0); k < K; k += 1 {
 				grad_data[j*K+k] += w_data[i*K+k]
 			}
+			value += wh
 		}
 	}
 
-	for i := uint32(0); i < M; i++ {
-		for p := l.V.data.Jc[i]; p < l.V.data.Jc[i+1]; p++ {
-			j, v := l.V.data.Ir[p], l.V.data.Val[p]
+	// 2nd pass for loss/grad coresponding to V only.
+	for j := uint32(0); j < N; j++ {
+		for p := l.V.data.Ir[j]; p < l.V.data.Ir[j+1]; p++ {
+			i, v := l.V.data.Jc[p], l.V.data.Val[p]
 
 			wh := float32(0.0)
-			for k := uint32(0); k < K; k += 1 {
+			for k := uint32(0); k < K; k++ {
 				wh += w_data[i*K+k] * H_data[j*K+k]
 			}
-
-			// accumulate to grad vec
 			value += -v * float32(math.Log(float64(wh+l.smooth)))
-			for k := uint32(0); k < K; k += 1 {
+
+			for k := uint32(0); k < K; k++ {
 				grad_data[j*K+k] += -w_data[i*K+k] * (v + l.smooth) / (wh + l.smooth)
 			}
 		}

@@ -101,9 +101,9 @@ func getShards() (row0, column0, row1, column1 *pb.MatrixShard) {
 		IsSparse: true,
 		M:        2,
 		N:        4,
-		Val:      []float32{0.42, 0.30, 0.30, 0.34, 0.10, 0.70, 1.00},
-		Ir:       []uint32{0, 1, 0, 0, 1, 0, 1},
-		Jc:       []uint32{0, 2, 3, 5, 7},
+		Val:      []float32{0.42, 0.30, 0.34, 0.70, 0.30, 0.10, 1.00},
+		Ir:       []uint32{0, 4, 7},
+		Jc:       []uint32{0, 1, 2, 3, 0, 2, 3},
 	}
 
 	// shard0: column 0,1 of A
@@ -111,19 +111,19 @@ func getShards() (row0, column0, row1, column1 *pb.MatrixShard) {
 		IsSparse: true,
 		M:        2,
 		N:        3,
-		Val:      []float32{0.42, 0.30, 0.30, 0.70, 1.00},
-		Ir:       []uint32{0, 1, 0, 0, 1},
-		Jc:       []uint32{0, 2, 3, 5},
+		Val:      []float32{0.42, 0.30, 0.70, 0.30, 1.00},
+		Ir:       []uint32{0, 3, 5},
+		Jc:       []uint32{0, 1, 2, 0, 2},
 	}
 
-	// shard1: row 1 of A
+	// shard1: row 2 of A
 	rowShard1 := &pb.MatrixShard{
 		IsSparse: true,
 		M:        1,
 		N:        4,
 		Val:      []float32{0.70, 1.00, 0.90},
-		Ir:       []uint32{0, 0, 0},
-		Jc:       []uint32{0, 1, 2, 3, 3},
+		Ir:       []uint32{0, 3},
+		Jc:       []uint32{0, 1, 2},
 	}
 
 	// shard1: column 2,3 of A
@@ -131,9 +131,9 @@ func getShards() (row0, column0, row1, column1 *pb.MatrixShard) {
 		IsSparse: true,
 		M:        2,
 		N:        3,
-		Val:      []float32{0.34, 0.70, 0.10, 1.00, 0.90},
-		Ir:       []uint32{0, 1, 0, 1, 0},
-		Jc:       []uint32{0, 2, 4, 5},
+		Val:      []float32{0.34, 0.10, 0.90, 0.70, 1.00},
+		Ir:       []uint32{0, 3, 5},
+		Jc:       []uint32{0, 1, 2, 0, 1},
 	}
 
 	return rowShard0, columnShard0, rowShard1, columnShard1

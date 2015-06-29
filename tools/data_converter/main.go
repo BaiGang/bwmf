@@ -75,7 +75,7 @@ func loadConfig(path string) (*bwmf.Config, error) {
 
 // NOTE(baigang): Each line represents an element, formated as "rowID columnID value".
 // The `rowID`s are ASSUMED to be sorted and grouped (as in reducer tasks of a Hadoop job).
-func txtToMatPb(n int) (*pb.MatrixShard, error) {
+func txtToMatPb(colSize int) (*pb.MatrixShard, error) {
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Split(bufio.ScanLines)
 
@@ -118,8 +118,8 @@ func txtToMatPb(n int) (*pb.MatrixShard, error) {
 
 	return &pb.MatrixShard{
 		IsSparse: true,
-		M:        uint32(len(ir) - 1),
-		N:        uint32(n),
+		M:        uint32(ir[len(ir)-1]),
+		N:        uint32(colSize),
 		Val:      val,
 		Ir:       ir,
 		Jc:       jc,
