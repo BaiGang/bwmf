@@ -71,7 +71,7 @@ func (l *KLDivLoss) Evaluate(H op.Parameter, gradient op.Parameter) float32 {
 		}
 	}
 
-	// 2nd pass for loss/grad coresponding to V only.
+	// 2nd pass for loss/grad coresponding to V.
 	for j := uint32(0); j < N; j++ {
 		for p := l.V.data.Ir[j]; p < l.V.data.Ir[j+1]; p++ {
 			i, v := l.V.data.Jc[p], l.V.data.Val[p]
@@ -82,8 +82,9 @@ func (l *KLDivLoss) Evaluate(H op.Parameter, gradient op.Parameter) float32 {
 			}
 			value += -v * float32(math.Log(float64(wh+l.smooth)))
 
+			factor := (v + l.smooth) / (wh + l.smooth)
 			for k := uint32(0); k < K; k++ {
-				grad_data[j*K+k] += -w_data[i*K+k] * (v + l.smooth) / (wh + l.smooth)
+				grad_data[j*K+k] += -w_data[i*K+k] * factor
 			}
 		}
 	}

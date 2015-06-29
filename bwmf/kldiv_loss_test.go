@@ -25,12 +25,41 @@ func TestEvaluation(t *testing.T) {
 	fmt.Println("loss val is ", loss_val)
 	fmt.Println("gradient is ", g)
 
-	expectedLoss := 5.999997
+	// the loss is: sum of
+	//
+	//   -----------   ---------------------------------
+	//   | 1.0 1.0 |   | 0.0*log(1.0+s) 1.0*log(1.0+s) |
+	//   |---------|   |-------------------------------|
+	//   | 1.0 1.0 | - | 1.0*log(1.0+s) 0.0*log(1.0+s) |
+	//   |---------|   |-------------------------------|
+	//   | 1.0 1.0 |   | 0.5*log(1.0+s) 0.5*log(1.0+s) |
+	//   -----------   ---------------------------------
+	//
+	// which is then approximately 6 - 3.0*log(1.0+s)
+
+	expectedLoss := 6.0
 	if math.Abs(float64(loss_val)-expectedLoss) > 1e-5 {
 		t.Errorf("Loss value incorrect: actual %f, expected %f", loss_val, expectedLoss)
 	}
 
-	expectedGrad := []float32{1.2499998, 0.24999973, 0.24999973, 1.2499998}
+	// the gradient is:
+	//
+	//  ---------------   -----------   ---------------   -----------
+	//  | 1.0 0.0 0.5 |   | 1.0 1.0 |   | 1.0 0.0 0.5 |   | 0.0 1.0 |
+	//  |-------------| * |---------| - |-------------| * |---------|
+	//  | 0.0 1.0 0.5 |   | 1.0 1.0 |   | 0.0 1.0 0.5 |   | 1.0 0.0 |
+	//  ---------------   |---------|   ---------------   |---------|
+	//                    | 1.0 1.0 |                     | 0.5 0.5 |
+	//                    -----------                     -----------
+	// , which should be:
+	//
+	//      -------------
+	//      | 1.25 0.25 |
+	//      |-----------|
+	//      | 0.25 1.25 |
+	//      -------------
+
+	expectedGrad := []float32{1.25, 0.25, 0.25, 1.25}
 	if euclideanDist(g.Data(), expectedGrad) > 1e-5 {
 		t.Errorf("Gradient incorrect: actual %v, expected %v", g.Data(), expectedGrad)
 	}
@@ -45,10 +74,39 @@ func TestEvaluation(t *testing.T) {
 	fmt.Println("loss val is ", loss_val)
 	fmt.Println("gradient is ", g)
 
-	expectedLoss = 3.6931434
+	// the loss is: sum of
+	//
+	//   -----------   ---------------------------------
+	//   | 0.0 1.0 |   | 0.0*log(0.0+s) 1.0*log(1.0+s) |
+	//   |---------|   |-------------------------------|
+	//   | 1.0 0.0 | - | 1.0*log(1.0+s) 0.0*log(0.0+s) |
+	//   |---------|   |-------------------------------|
+	//   | 0.5 0.5 |   | 0.5*log(0.5+s) 0.5*log(0.5+s) |
+	//   -----------   ---------------------------------
+	//
+	// which is then (1.0+1.0+0.5+0.5) - ( 2log(s) + log(0.5+s)), approximately 2-log(0.5)
+
+	expectedLoss = 3.0 - math.Log(0.5)
 	if math.Abs(float64(loss_val)-expectedLoss) > 1e-5 {
 		t.Errorf("Loss value incorrect: actual %f, expected %f", loss_val, expectedLoss)
 	}
+
+	// the gradient is:
+	//
+	//  ---------------   -----------   ---------------   -----------
+	//  | 1.0 0.0 0.5 |   | 1.0 1.0 |   | 1.0 0.0 0.5 |   | 0.0 1.0 |
+	//  |-------------| * |---------| - |-------------| * |---------|
+	//  | 0.0 1.0 0.5 |   | 1.0 1.0 |   | 0.0 1.0 0.5 |   | 1.0 0.0 |
+	//  ---------------   |---------|   ---------------   |---------|
+	//                    | 1.0 1.0 |                     | 1.0 1.0 |
+	//                    -----------                     -----------
+	// , which should be:
+	//
+	//      -----------
+	//      | 1.0 0.0 |
+	//      |---------|
+	//      | 0.0 1.0 |
+	//      -----------
 
 	expectedGrad = []float32{1, 0, 0, 1}
 	if euclideanDist(g.Data(), expectedGrad) > 1e-5 {
@@ -69,13 +127,14 @@ func newKLDivLoss() *KLDivLoss {
 	// |-----|-----|
 	// | 0.5 | 0.5 |
 	// |-----|-----|
+	// XXX(baigang): which should be transposed to be loaded in MatrixShard
 	v := &pb.MatrixShard{
 		IsSparse: true,
 		M:        2,
 		N:        3,
-		Val:      []float32{1.0, 1.0, 0.5, 0.5},
-		Ir:       []uint32{1, 0, 0, 1},
-		Jc:       []uint32{0, 1, 2, 4},
+		Val:      []float32{1.0, 0.5, 1.0, 0.5},
+		Ir:       []uint32{0, 2, 4},
+		Jc:       []uint32{1, 2, 0, 2},
 	}
 
 	// w is composed by two shards:
